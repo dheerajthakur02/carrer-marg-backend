@@ -1,6 +1,6 @@
 import Application from "../models/application.model.js";
 import Student from "../models/student.model.js";
-
+import College from "../models/college.model.js ";
 // 🎓 Student applies
 export const studentApply = async (req, res) => {
   try {
@@ -13,6 +13,20 @@ export const studentApply = async (req, res) => {
         .status(404)
         .json({ message: "Student profile not found", success: false });
 
+    const college = await College.findOne({ id: collegeId });
+    if (!college) {
+      return res
+        .status(404)
+        .json({ message: "college not found", success: false });
+    }
+    const course = await Course.findOne({ id: courseId });
+
+    if (!course) {
+      return res
+        .status(404)
+        .json({ message: "course not found", success: false });
+    }
+   
     const exists = await Application.findOne({
       studentId: student.id,
       collegeId,
@@ -30,13 +44,11 @@ export const studentApply = async (req, res) => {
       appliedBy: "student",
     });
 
-    res
-      .status(201)
-      .json({
-        message: "Application submitted successfully",
-        success: true,
-        data: app,
-      });
+    res.status(201).json({
+      message: "Application submitted successfully",
+      success: true,
+      data: app,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message, success: false });
   }
@@ -66,13 +78,11 @@ export const agentApply = async (req, res) => {
       appliedThrough: agentId,
     });
 
-    res
-      .status(201)
-      .json({
-        message: "Application submitted successfully",
-        success: true,
-        data: app,
-      });
+    res.status(201).json({
+      message: "Application submitted successfully",
+      success: true,
+      data: app,
+    });
   } catch (error) {
     res.status(500).json({ message: error.message, success: false });
   }

@@ -47,11 +47,7 @@ const collegeSchema = new mongoose.Schema(
     },
 
     // 📚 Courses Offered
-    courses: [
-      {
-        courseId: { type: String },
-      },
-    ],
+    courses: [],
 
     // 💸 Fee & Scholarship Info
     avgFees: {

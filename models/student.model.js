@@ -62,18 +62,6 @@ const studentSchema = new mongoose.Schema(
     passingYear: {
       type: Number,
     },
-
-    appliedColleges: [
-      {
-        collegeId: { type: String },
-        applicationStatus: {
-          type: String,
-          enum: ["applied", "shortlisted", "rejected", "accepted"],
-          default: "applied",
-        },
-      },
-    ],
-
     preferredCity: {
       type: String,
     },
