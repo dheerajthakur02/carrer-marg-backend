@@ -7,13 +7,6 @@ const collegeSchema = new mongoose.Schema(
       type: String,
       default: () => `college-${uuidv4()}`,
     },
-
-    userId: {
-      type: String,
-      required: true, // Reference to User schema (role: "college")
-    },
-
-    // 🏫 Basic Information
     name: {
       type: String,
       required: true,
@@ -57,12 +50,6 @@ const collegeSchema = new mongoose.Schema(
     courses: [
       {
         courseId: { type: String },
-        name: { type: String },
-        level: { type: String }, // UG, PG, Diploma, etc.
-        duration: { type: String }, // e.g., "4 years"
-        eligibility: { type: String }, // e.g., "10+2 with PCM"
-        fees: { type: Number },
-        entranceExam: { type: String },
       },
     ],
 

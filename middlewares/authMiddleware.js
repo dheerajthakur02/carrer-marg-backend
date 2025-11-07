@@ -8,7 +8,6 @@ export const authorize = (roles = []) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       req.user = decoded;
-
       // If roles array is empty, allow any authenticated user
       if (Array.isArray(roles) && roles.length === 0) {
         return next();

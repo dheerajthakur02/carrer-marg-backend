@@ -13,10 +13,11 @@ const userSchema = new mongoose.Schema(
     },
     email: {
       type: String,
+      required: true,
     },
     role: {
       type: String,
-      enum: ["student", "college", "super-admin"],
+      enum: ["student", "agent", "super-admin"],
       required: true,
     },
     mobile: {

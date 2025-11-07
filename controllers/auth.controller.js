@@ -1,44 +1,34 @@
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
-import College from "../models/college.model.js";
 import Student from "../models/student.model.js";
-import jwt from "jsonwebtoken";
-import { internalServerErrorMessage } from "../utils/responseMessage.js";
-export const setCookie = (res, token) => {
-  res.cookie("token", token, {
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-    httpOnly: true,
-    sameSite: "strict",
-    secure: process.env.NODE_ENV === "production",
-  });
-};
-
-const generateToken = (id, role) => {
-  return jwt.sign({ id, role }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-};
+import Agent from "../models/agent.model.js";
+import generateToken from "../utils/generateToken.js";
+import setCookie from "../utils/setCookie.js";
 
 export const register = async (req, res) => {
   try {
     const { name, role, email, mobile, password, ...profileData } = req.body;
+
     if (!name || !mobile || !password || !role) {
       return res.status(400).json({
-        message: "name, password, mobile, and password are required",
+        message: "name, mobile, password, and role are required",
         success: false,
       });
     }
+
+    // Check if user already exists
     const alreadyPresentUser = await User.findOne({
       $or: [{ email }, { mobile }],
     });
 
     if (alreadyPresentUser) {
       return res.status(400).json({
-        message: "User with this creditional already existed!!",
+        message: "User with this email or mobile already exists!",
         success: false,
       });
     }
 
+    // Create user
     const user = new User({
       name,
       role,
@@ -48,6 +38,7 @@ export const register = async (req, res) => {
     });
     await user.save();
 
+    // Create corresponding profile based on role
     let profile;
     if (role === "student") {
       profile = await Student.create({
@@ -55,12 +46,14 @@ export const register = async (req, res) => {
         fullName: user.name || profileData?.fullName,
         ...profileData,
       });
-    } else if (role == "college") {
-      profile = await Organization.create({
+    } else if (role === "agent") {
+      profile = await Agent.create({
         userId: user.id,
-        type: role,
+        fullName: user.name || profileData?.fullName,
         ...profileData,
       });
+    } else if (role === "super-admin") {
+      profile = user; // no separate schema needed
     } else {
       return res.status(400).json({
         message: "Invalid role",
@@ -74,44 +67,57 @@ export const register = async (req, res) => {
       data: { user, profile },
     });
   } catch (error) {
-    internalServerErrorMessage(res, error);
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+      success: false,
+    });
   }
 };
 
 export const loginWithPassword = async (req, res) => {
   try {
     const { email, mobile, password } = req.body;
+
     if (!email && !mobile) {
-      return res
-        .status(400)
-        .json({ message: "Email or mobile is required", success: false });
+      return res.status(400).json({
+        message: "Email or mobile is required",
+        success: false,
+      });
     }
 
     const user = await User.findOne({
-      $or: [{ mobile }, { email }],
+      $or: [{ email }, { mobile }],
     });
+
     if (!user) {
-      return res
-        .status(404)
-        .json({ message: "User not found", success: false });
+      return res.status(404).json({
+        message: "User not found",
+        success: false,
+      });
     }
+
     const comparePassword = await bcrypt.compare(password, user.password);
-
     if (!comparePassword) {
-      return res.status(400).json({ message: "Incorrect email or password" });
+      return res
+        .status(400)
+        .json({ message: "Incorrect email or password", success: false });
     }
 
+    // Fetch profile based on role
     let profile = null;
-    if (user.role == "student") {
+    if (user.role === "student") {
       profile = await Student.findOne({ userId: user.id });
-    } else if (user.role == "college") {
-      profile = await College.findOne({ userId: user.id });
+    } else if (user.role === "agent") {
+      profile = await Agent.findOne({ userId: user.id });
     }
+
     const token = generateToken(user.id, user.role);
     setCookie(res, token);
 
     return res.status(200).json({
-      message: `Login successfully! Welcome ${profile.name || user.name}`,
+      message: `Login successful! Welcome ${user.name}`,
+      user,
       profile,
       success: true,
     });
@@ -126,7 +132,6 @@ export const loginWithPassword = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    const role = req.user.role;
     res.clearCookie("token", {
       httpOnly: true,
       sameSite: "strict",
@@ -134,7 +139,7 @@ export const logout = (req, res) => {
     });
 
     return res.status(200).json({
-      message: `${role} has been logged out successfully`,
+      message: `${req?.user?.role || "User"} has been logged out successfully`,
       success: true,
     });
   } catch (error) {
@@ -150,18 +155,22 @@ export const getProfile = async (req, res) => {
   try {
     const id = req.user.id;
     const role = req.user.role;
-    let profile;
-    if (role == "student") {
+
+    const user = await User.findOne({ id });
+
+    let profile = null;
+    if (role === "student") {
       profile = await Student.findOne({ userId: id });
-    } else if (role == "college") {
-      profile = await College.findOne({ userId: id });
-    } else if (role == "super-admin") {
-      profile = await User.findOne({ id });
+    } else if (role === "agent") {
+      profile = await Agent.findOne({ userId: id });
+    } else if (role === "super-admin") {
+      profile = user;
     }
+
     return res.status(200).json({
-      message: `${role} data fecthed successfully`,
-      profile,
+      message: `${role} profile fetched successfully`,
       success: true,
+      data: { user, profile },
     });
   } catch (error) {
     return res.status(500).json({
