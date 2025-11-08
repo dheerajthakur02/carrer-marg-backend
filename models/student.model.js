@@ -72,10 +72,6 @@ const studentSchema = new mongoose.Schema(
       min: { type: Number },
       max: { type: Number },
     },
-
-    counselorAssigned: {
-      type: String,
-    },
     status: {
       type: String,
       enum: ["active", "inactive"],

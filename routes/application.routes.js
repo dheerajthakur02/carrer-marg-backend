@@ -5,6 +5,8 @@ import {
   agentApply,
   getStudentApplications,
   getAgentApplications,
+  getApplicationById,
+  getAllApplications,
 } from "../controllers/application.controller.js";
 
 const router = express.Router();
@@ -17,5 +19,12 @@ router.get(
   getStudentApplications
 );
 router.get("/agent/applications", authorize(["agent"]), getAgentApplications);
+
+router.get("/:id", getApplicationById);
+router.get(
+  "/",
+  authorize(["agent", "student", "super-admin"]),
+  getAllApplications
+);
 
 export default router;

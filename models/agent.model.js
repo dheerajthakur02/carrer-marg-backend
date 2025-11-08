@@ -15,20 +15,7 @@ const agentSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    assignedStudents: [
-      {
-        studentId: String,
-        assignedOn: {
-          type: Date,
-          default: Date.now,
-        },
-      },
-    ],
-
-    totalStudentsHandled: {
-      type: Number,
-      default: 0,
-    },
+    Students: [],
     status: {
       type: String,
       enum: ["active", "inactive"],

@@ -2,7 +2,6 @@ import Agent from "../models/agent.model.js";
 import Student from "../models/student.model.js";
 import Application from "../models/application.model.js";
 
-// 🧩 1️⃣ Get all unassigned students
 export const getUnassignedStudents = async (req, res) => {
   try {
     const students = await Student.find({ agentAssigned: { $exists: false } });
@@ -16,7 +15,6 @@ export const getUnassignedStudents = async (req, res) => {
   }
 };
 
-// 🧩 2️⃣ Assign a student to this agent
 export const assignStudentToAgent = async (req, res) => {
   try {
     const { studentId } = req.params;
@@ -30,12 +28,10 @@ export const assignStudentToAgent = async (req, res) => {
     }
 
     if (student.agentAssigned) {
-      return res
-        .status(400)
-        .json({
-          message: "Student already assigned to an agent",
-          success: false,
-        });
+      return res.status(400).json({
+        message: "Student already assigned to an agent",
+        success: false,
+      });
     }
 
     // Update student document
@@ -63,7 +59,6 @@ export const assignStudentToAgent = async (req, res) => {
   }
 };
 
-// 🧩 3️⃣ Get all students assigned to this agent
 export const getAssignedStudents = async (req, res) => {
   try {
     const agentId = req.user.id;
@@ -79,7 +74,6 @@ export const getAssignedStudents = async (req, res) => {
   }
 };
 
-// 🧩 4️⃣ Get all applications of assigned students
 export const getAssignedApplications = async (req, res) => {
   try {
     const agentId = req.user.id;
@@ -97,5 +91,29 @@ export const getAssignedApplications = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getStudents = async (req, res) => {
+  try {
+    const id = req.user.id;
+    const students = await Student.find({ enrolledBy: id });
+    if (!students) {
+      return res.status(404).json({
+        message: "Student not found!",
+        success: false,
+      });
+    }
+    return res.status(200).json({
+      message: "Student details",
+      success: true,
+      data: students,
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Internal server error",
+      error: error.message,
+      success: false,
+    });
   }
 };

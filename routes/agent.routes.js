@@ -6,6 +6,7 @@ import {
   assignStudentToAgent,
   getAssignedStudents,
   getAssignedApplications,
+  getStudents,
 } from "../controllers/agent.controller.js";
 
 const router = express.Router();
@@ -25,5 +26,7 @@ router.get("/students", authorize(["agent"]), getAssignedStudents);
 
 // 🧾 Get all applications of assigned students
 router.get("/applications", authorize(["agent"]), getAssignedApplications);
+
+router.get("/all-students", authorize(), getStudents);
 
 export default router;

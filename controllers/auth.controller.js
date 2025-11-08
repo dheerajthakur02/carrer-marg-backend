@@ -110,9 +110,10 @@ export const loginWithPassword = async (req, res) => {
       profile = await Student.findOne({ userId: user.id });
     } else if (user.role === "agent") {
       profile = await Agent.findOne({ userId: user.id });
+    } else {
+      profile = user;
     }
-
-    const token = generateToken(user.id, user.role);
+    const token = generateToken(user.id, user.role, profile.id);
     setCookie(res, token);
 
     return res.status(200).json({

@@ -1,4 +1,5 @@
 import Application from "../models/application.model.js";
+import Agent from "../models/agent.model.js";
 import Student from "../models/student.model.js";
 import College from "../models/college.model.js ";
 // 🎓 Student applies
@@ -26,7 +27,7 @@ export const studentApply = async (req, res) => {
         .status(404)
         .json({ message: "course not found", success: false });
     }
-   
+
     const exists = await Application.findOne({
       studentId: student.id,
       collegeId,
@@ -58,8 +59,7 @@ export const studentApply = async (req, res) => {
 export const agentApply = async (req, res) => {
   try {
     const { studentId, collegeId, courseId } = req.body;
-    const agentId = req.user.id;
-
+    const agentId = req.user.profileId;
     const exists = await Application.findOne({
       studentId,
       collegeId,
@@ -108,5 +108,108 @@ export const getAgentApplications = async (req, res) => {
     res.status(200).json({ success: true, data: apps });
   } catch (error) {
     res.status(500).json({ message: error.message, success: false });
+  }
+};
+
+export const getApplicationById = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const application = await Application.findOne({ id });
+
+    if (!application) {
+      return res.status(404).json({
+        success: false,
+        message: "Application not found",
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: "Application fetched successfully",
+      data: application,
+    });
+  } catch (error) {
+    console.error("Error fetching application:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
+  }
+};
+
+export const getAllApplications = async (req, res) => {
+  try {
+    const {
+      page = 1,
+      limit = 10,
+      studentId,
+      collegeId,
+      courseId,
+      appliedBy,
+      appliedThrough,
+      status,
+    } = req.query;
+
+    const pageNum = parseInt(page);
+    const limitNum = parseInt(limit);
+
+    const filter = {};
+
+    if (req.user.role == "student") {
+      filter.studentId = req.user.profileId;
+    }
+    if (req.user.role == "agent") {
+      filter.appliedThrough = req.user.profileId;
+    }
+    if (req.user.role == "super-admin") {
+      if (studentId) filter.studentId = studentId;
+      if (appliedBy) filter.appliedBy = { $regex: appliedBy, $options: "i" };
+      if (appliedThrough) filter.appliedThrough = appliedThrough;
+    }
+    if (collegeId) filter.collegeId = collegeId;
+    if (courseId) filter.courseId = courseId;
+    if (status) filter.status = { $regex: status, $options: "i" };
+    const pipeline = [
+      { $match: filter },
+      {
+        $project: {
+          _id: 0,
+          id: 1,
+          studentId: 1,
+          collegeId: 1,
+          courseId: 1,
+          appliedBy: 1,
+          status: 1,
+          address: 1,
+          appliedThrough: 1,
+        },
+      },
+    ];
+
+    if (limitNum > 0) {
+      pipeline.push({ $skip: (pageNum - 1) * limitNum });
+      pipeline.push({ $limit: limitNum });
+    }
+
+    const applications = await Application.aggregate(pipeline);
+    const totalApplications = await Application.countDocuments(filter);
+
+    res.status(200).json({
+      success: true,
+      message: "applications fetched successfully",
+      data: applications,
+      totalApplications,
+      currentPage: limitNum < 0 ? 1 : pageNum,
+      totalPages: limitNum > 0 ? Math.ceil(totalApplications / limitNum) : 1,
+    });
+  } catch (error) {
+    console.error("Error fetching applications:", error);
+    res.status(500).json({
+      success: false,
+      message: "Internal Server Error",
+      error: error.message,
+    });
   }
 };
