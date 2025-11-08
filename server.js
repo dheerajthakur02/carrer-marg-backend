@@ -8,21 +8,19 @@ import authRoutes from "./routes/auth.routes.js";
 import collegeRoutes from "./routes/college.routes.js";
 import courseRoutes from "./routes/course.routes.js";
 import applicationRoutes from "./routes/application.routes.js";
-import agentRoutes from "./routes/agent.routes.js";
-import studentRoutes from "./routes/student.routes.js";
+import userRoutes from "./routes/user.routes.js";
 
 dotenv.config();
 const app = express();
 
 app.use(express.json());
-app.use(cookieParser());
+app.use(cookieParser());   
 
 app.use("/api/auth", authRoutes);
-app.use("/api/students", studentRoutes);
+app.use("/api/users", userRoutes);
 app.use("/api/colleges", collegeRoutes);
 app.use("/api/courses", courseRoutes);
 app.use("/api/applications", applicationRoutes);
-app.use("/api/agent", agentRoutes);
 
 app.get("/", (req, res) => {
   res.send("Sever is running");

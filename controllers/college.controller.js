@@ -24,19 +24,16 @@ export const createCollege = async (req, res) => {
   }
 };
 
-// 📋 Get all colleges
 export const getAllColleges = async (req, res) => {
   try {
-    // 🧾 Extract query parameters
     const { page = 1, limit = 10, search = "", type, state, city } = req.query;
 
     const pageNum = parseInt(page);
     const limitNum = parseInt(limit);
 
-    // 🧩 Create a dynamic filter
     const filter = { status: "active" };
 
-    if (type) filter.type = type; // Filter by type (private/government/etc.)
+    if (type) filter.type = type;
     if (state) filter.state = { $regex: state, $options: "i" };
     if (city) filter.city = { $regex: city, $options: "i" };
 
@@ -49,7 +46,6 @@ export const getAllColleges = async (req, res) => {
       ];
     }
 
-    // 📊 MongoDB aggregation pipeline
     const pipeline = [
       { $match: filter },
       {
@@ -76,17 +72,14 @@ export const getAllColleges = async (req, res) => {
       },
     ];
 
-    // ⏳ Pagination
     if (limitNum > 0) {
       pipeline.push({ $skip: (pageNum - 1) * limitNum });
       pipeline.push({ $limit: limitNum });
     }
 
-    // 📚 Fetch data and total count
     const colleges = await College.aggregate(pipeline);
     const totalColleges = await College.countDocuments(filter);
 
-    // 📦 Response
     res.status(200).json({
       success: true,
       message: "Colleges fetched successfully",
@@ -105,7 +98,6 @@ export const getAllColleges = async (req, res) => {
   }
 };
 
-// 🔍 Get single college by ID
 export const getCollegeById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -121,7 +113,6 @@ export const getCollegeById = async (req, res) => {
   }
 };
 
-// ✏️ Update college
 export const updateCollege = async (req, res) => {
   try {
     const { id } = req.params;
@@ -135,11 +126,9 @@ export const updateCollege = async (req, res) => {
         .json({ message: "College not found", success: false });
     }
 
-    // 2️⃣ Update other details
     Object.assign(college, updateData);
     await college.save();
 
-    // 3️⃣ If a courseId is provided, add it to the college’s course list
     if (courseId) {
       const alreadyExists = college.courses.some(
         (course) => course.courseId === courseId
@@ -150,7 +139,6 @@ export const updateCollege = async (req, res) => {
       }
     }
 
-    // 4️⃣ Send response
     res.status(200).json({
       message: "College updated successfully",
       success: true,
@@ -162,7 +150,6 @@ export const updateCollege = async (req, res) => {
   }
 };
 
-// 🗑️ Delete college
 export const deleteCollege = async (req, res) => {
   try {
     const { id } = req.params;

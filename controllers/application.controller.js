@@ -1,18 +1,11 @@
 import Application from "../models/application.model.js";
-import Agent from "../models/agent.model.js";
-import Student from "../models/student.model.js";
 import College from "../models/college.model.js ";
-// 🎓 Student applies
+import Course from "../models/course.model.js";
+import User from "../models/user.model.js";
 export const studentApply = async (req, res) => {
   try {
     const { collegeId, courseId } = req.body;
-    const studentUserId = req.user.id;
-
-    const student = await Student.findOne({ userId: studentUserId });
-    if (!student)
-      return res
-        .status(404)
-        .json({ message: "Student profile not found", success: false });
+    const id = req.user.id;
 
     const college = await College.findOne({ id: collegeId });
     if (!college) {
@@ -29,7 +22,7 @@ export const studentApply = async (req, res) => {
     }
 
     const exists = await Application.findOne({
-      studentId: student.id,
+      studentId: id,
       collegeId,
       courseId,
     });
@@ -39,7 +32,7 @@ export const studentApply = async (req, res) => {
         .json({ message: "Already applied for this course", success: false });
 
     const app = await Application.create({
-      studentId: student.id,
+      studentId: id,
       collegeId,
       courseId,
       appliedBy: "student",
@@ -55,11 +48,34 @@ export const studentApply = async (req, res) => {
   }
 };
 
-// 🧑‍💼 Agent applies for student
 export const agentApply = async (req, res) => {
   try {
     const { studentId, collegeId, courseId } = req.body;
-    const agentId = req.user.profileId;
+    if (!studentId || !collegeId || !courseId) {
+      return res.json(400).json({
+        message: "some feilds are missing.",
+        success: false,
+      });
+    }
+    const id = req.user.id;
+    const user = await User.findOne({ id: studentId });
+    if (!user) {
+      return res
+        .status(404)
+        .json({ message: "Student not found", success: false });
+    }
+    const college = await College.findOne({ id: collegeId });
+    if (!college) {
+      return res
+        .status(404)
+        .json({ message: "College not found", success: false });
+    }
+    const course = await Course.findOne({ id: courseId });
+    if (!course) {
+      return res
+        .status(404)
+        .json({ message: "Course not found", success: false });
+    }
     const exists = await Application.findOne({
       studentId,
       collegeId,
@@ -75,37 +91,15 @@ export const agentApply = async (req, res) => {
       collegeId,
       courseId,
       appliedBy: "agent",
-      appliedThrough: agentId,
+      appliedThrough: id,
     });
-
+    user.enrolledBy = id;
+    await user.save();
     res.status(201).json({
-      message: "Application submitted successfully",
+      message: `Application of Student named ${user.name} submitted successfully!! in ${college.name} in ${course.name}`,
       success: true,
       data: app,
     });
-  } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
-  }
-};
-
-// 📋 View all applications (student)
-export const getStudentApplications = async (req, res) => {
-  try {
-    const student = await Student.findOne({ userId: req.user.id });
-    const apps = await Application.find({ studentId: student.id });
-    res.status(200).json({ success: true, data: apps });
-  } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
-  }
-};
-
-// 📋 View all applications (agent)
-export const getAgentApplications = async (req, res) => {
-  try {
-    const students = await Student.find({ agentAssigned: req.user.id });
-    const ids = students.map((s) => s.id);
-    const apps = await Application.find({ studentId: { $in: ids } });
-    res.status(200).json({ success: true, data: apps });
   } catch (error) {
     res.status(500).json({ message: error.message, success: false });
   }
@@ -158,10 +152,10 @@ export const getAllApplications = async (req, res) => {
     const filter = {};
 
     if (req.user.role == "student") {
-      filter.studentId = req.user.profileId;
+      filter.studentId = req.user.id;
     }
     if (req.user.role == "agent") {
-      filter.appliedThrough = req.user.profileId;
+      filter.appliedThrough = req.user.id;
     }
     if (req.user.role == "super-admin") {
       if (studentId) filter.studentId = studentId;

@@ -5,7 +5,10 @@ const userSchema = new mongoose.Schema(
   {
     id: {
       type: String,
-      default: () => `user-${uuidv4()}`,
+      default: function () {
+        return `${this.role}-${uuidv4()}`;
+      },
+      uniquie: true,
     },
     name: {
       type: String,
@@ -27,6 +30,45 @@ const userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
+    },
+
+    gender: {
+      type: String,
+      enum: ["male", "female", "other"],
+    },
+    dob: {
+      type: Date,
+    },
+    address: {
+      type: String,
+    },
+    city: {
+      type: String,
+    },
+    state: {
+      type: String,
+    },
+    country: {
+      type: String,
+      default: "India",
+    },
+    enrolledBy: {
+      type: String,
+      default: "",
+    },
+    tenthPercentage: {
+      type: Number,
+    },
+    twelfthPercentage: {
+      type: Number,
+    },
+    graduationPercentage: {
+      type: Number,
+    },
+    status: {
+      type: String,
+      enum: ["active", "inactive"],
+      default: "active",
     },
   },
   {

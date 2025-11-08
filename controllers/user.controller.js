@@ -1,23 +1,23 @@
-import Student from "../models/student.model.js";
+import User from "../models/user.model.js";
 
-export const getStudentById = async (req, res) => {
+export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const student = await Student.findOne({ id });
+    const user = await User.findOne({ id });
 
-    if (!student) {
+    if (!user) {
       return res.status(404).json({
         success: false,
-        message: "Student not found",
+        message: `User not found`,
       });
     }
     res.status(200).json({
       success: true,
-      message: "Student fetched successfully",
-      data: student,
+      message: "User fetched successfully",
+      data: user,
     });
   } catch (error) {
-    console.error("Error fetching student:", error);
+    console.error("Error fetching user:", error);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -34,28 +34,28 @@ export const updateStudentDetails = async (req, res) => {
     if (!id) {
       return res.status(400).json({
         success: false,
-        message: "Student ID is required",
+        message: "user id is required",
       });
     }
 
-    const updatedStudent = await Student.findOneAndUpdate({ id }, updateData, {
+    const updatedUser = await User.findOneAndUpdate({ id }, updateData, {
       new: true,
     });
 
-    if (!updatedStudent) {
+    if (!updatedUser) {
       return res.status(404).json({
         success: false,
-        message: "Student not found",
+        message: "User not found",
       });
     }
 
     res.status(200).json({
       success: true,
-      message: "Student details updated successfully",
-      data: updatedStudent,
+      message: "User details updated successfully",
+      data: updatedUser,
     });
   } catch (error) {
-    console.error("Error updating student details:", error);
+    console.error("Error updating user details:", error);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",
@@ -64,7 +64,7 @@ export const updateStudentDetails = async (req, res) => {
   }
 };
 
-export const getAllStudents = async (req, res) => {
+export const getAllUsers = async (req, res) => {
   try {
     const {
       page = 1,
@@ -73,7 +73,8 @@ export const getAllStudents = async (req, res) => {
       gender,
       city,
       state,
-      agentId,
+      role,
+      id,
     } = req.query;
 
     const pageNum = parseInt(page);
@@ -81,14 +82,23 @@ export const getAllStudents = async (req, res) => {
 
     const filter = { status: "active" };
 
-    if (agentId && agentId.trim() !== "") {
-      filter.enrolledBy = agentId;
+    if (role) {
+      filter.role = role;
     }
 
-    if (req.user.role == "agent") {
-      filter.enrolledBy = req.user.id;
+    if (id && id.trim() !== "") {
+      if (!role) {
+        return res
+          .status(400)
+          .json({ message: "role is required", success: "false" });
+      }
+      if (role == "agent") filter.enrolledBy = id;
+      else if (role == "student") filter.id = id;
     }
 
+    if (req.user?.role == "agent") {
+      filter.enrolledBy = req.user.role;
+    }
     if (state) filter.state = { $regex: state, $options: "i" };
     if (city) filter.city = { $regex: city, $options: "i" };
     if (gender) filter.gender = { $regex: gender, $options: "i" };
@@ -102,14 +112,15 @@ export const getAllStudents = async (req, res) => {
         $project: {
           _id: 0,
           id: 1,
-          userId: 1,
-          fullName: 1,
+          name: 1,
+          email: 1,
+          role: 1,
+          mobile: 1,
           gender: 1,
           dob: 1,
           address: 1,
           city: 1,
           state: 1,
-          country: 1,
         },
       },
     ];
@@ -119,19 +130,19 @@ export const getAllStudents = async (req, res) => {
       pipeline.push({ $limit: limitNum });
     }
 
-    const students = await Student.aggregate(pipeline);
-    const totalStudents = await Student.countDocuments(filter);
+    const users = await User.aggregate(pipeline);
+    const totalusers = await User.countDocuments(filter);
 
     res.status(200).json({
       success: true,
-      message: "Students fetched successfully",
-      data: students,
-      totalStudents,
+      message: "users fetched successfully",
+      data: users,
+      totalusers,
       currentPage: limitNum < 0 ? 1 : pageNum,
-      totalPages: limitNum > 0 ? Math.ceil(totalStudents / limitNum) : 1,
+      totalPages: limitNum > 0 ? Math.ceil(totalusers / limitNum) : 1,
     });
   } catch (error) {
-    console.error("Error fetching students:", error);
+    console.error("Error fetching users:", error);
     res.status(500).json({
       success: false,
       message: "Internal Server Error",

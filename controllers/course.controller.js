@@ -1,7 +1,5 @@
 import Course from "../models/course.model.js";
-import College from "../models/college.model.js";
 
-// ➕ Add course
 export const createCourse = async (req, res) => {
   try {
     const data = req.body;
@@ -29,7 +27,6 @@ export const createCourse = async (req, res) => {
   }
 };
 
-// 📋 Get all courses
 export const getAllCourses = async (req, res) => {
   try {
     const courses = await Course.find({ status: "active" });
@@ -39,7 +36,6 @@ export const getAllCourses = async (req, res) => {
   }
 };
 
-// ✏️ Update course
 export const updateCourse = async (req, res) => {
   try {
     const { id } = req.params;
@@ -60,7 +56,6 @@ export const updateCourse = async (req, res) => {
   }
 };
 
-// 🗑️ Delete course
 export const deleteCourse = async (req, res) => {
   try {
     const { id } = req.params;
