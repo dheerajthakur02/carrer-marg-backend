@@ -111,22 +111,3 @@ export const logout = (req, res) => {
     });
   }
 };
-
-export const getProfile = async (req, res) => {
-  try {
-    const id = req.user.id;
-    const role = req.user.role;
-    const user = await User.findOne({ id });
-    return res.status(200).json({
-      message: `${role} profile fetched successfully`,
-      success: true,
-      data: user,
-    });
-  } catch (error) {
-    return res.status(500).json({
-      message: "Internal server error",
-      error: error.message,
-      success: false,
-    });
-  }
-};
