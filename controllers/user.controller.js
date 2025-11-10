@@ -1,24 +1,68 @@
 import User from "../models/user.model.js";
-
+const allRoles = ["student", "agent", "super-admin"];
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findOne({ id });
+    const pipeline = [];
+    const filter = {};
+    const role = req.user.role;
 
-    if (!user) {
-      return res.status(404).json({
-        success: false,
-        message: `User not found`,
-      });
+    if (allRoles.includes(role)) {
+      const user = await User.findOne({ id });
+      if (user.role == "student") {
+        return res.status(200).json({
+          success: true,
+          message: "Student data fetched successfully",
+          data: user,
+        });
+      } else if (user.role == "super-admin") {
+        return res.status(400).json({
+          success: false,
+          message: "Confidential",
+        });
+      }
     }
-    res.status(200).json({
+    const data = [];
+    if (["agent", "super-admin"].includes(role)) {
+      const agentId = role == "agent" ? req.user.id : id;
+      filter.enrolledBy = agentId;
+      pipeline.push(
+        { $match: filter },
+        {
+          $project: {
+            _id: 0,
+            id: 1,
+            name: 1,
+            email: 1,
+            role: 1,
+            mobile: 1,
+            gender: 1,
+            dob: 1,
+            address: 1,
+            city: 1,
+            state: 1,
+          },
+        }
+      );
+      if (role == "super-admin") {
+        const agent = await User.findOne({ id: agentId });
+        data.push({ "Agent Profile": agent });
+      }
+      if (role == "agent") {
+        const agent = await User.findOne({ id: agentId });
+        data.push({ "Your Profile": agent });
+      }
+    }
+    const students = await User.aggregate(pipeline);
+    data.push({ "all enrolled students": students });
+    return res.status(200).json({
       success: true,
-      message: "User fetched successfully",
-      data: user,
+      message: "users fetched successfully",
+      data,
     });
   } catch (error) {
     console.error("Error fetching user:", error);
-    res.status(500).json({
+    return res.status(500).json({
       success: false,
       message: "Internal Server Error",
       error: error.message,
@@ -74,7 +118,6 @@ export const getAllUsers = async (req, res) => {
       city,
       state,
       role,
-      id,
     } = req.query;
 
     const pageNum = parseInt(page);
@@ -82,22 +125,11 @@ export const getAllUsers = async (req, res) => {
 
     const filter = { status: "active" };
 
-    if (role) {
-      filter.role = role;
-    }
-
-    if (id && id.trim() !== "") {
-      if (!role) {
-        return res
-          .status(400)
-          .json({ message: "role is required", success: "false" });
-      }
-      if (role == "agent") filter.enrolledBy = id;
-      else if (role == "student") filter.id = id;
-    }
-
     if (req.user?.role == "agent") {
-      filter.enrolledBy = req.user.role;
+      filter.enrolledBy = req.user.id;
+    }
+    if (req.user?.role == "super-admin" && role) {
+      filter.role = role;
     }
     if (state) filter.state = { $regex: state, $options: "i" };
     if (city) filter.city = { $regex: city, $options: "i" };

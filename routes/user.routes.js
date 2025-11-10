@@ -8,8 +8,8 @@ import { authorize } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.get("/", getAllUsers);
+router.get("/", authorize(["super-admin", "agent"]), getAllUsers);
 router.get("/profile", authorize(), getProfile);
-router.get("/:id", getUserById);
+router.get("/:id", authorize(), getUserById);
 
 export default router;
