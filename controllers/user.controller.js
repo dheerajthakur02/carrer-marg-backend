@@ -1,5 +1,4 @@
 import User from "../models/user.model.js";
-const allRoles = ["student", "agent", "super-admin"];
 export const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -7,13 +6,27 @@ export const getUserById = async (req, res) => {
     const filter = {};
     const role = req.user.role;
 
-    if (allRoles.includes(role)) {
+    if (["super-admin", "agent"].includes(role)) {
       const user = await User.findOne({ id });
-      if (user.role == "student") {
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User data not found!!",
+        });
+      }
+      if (
+        (user.role == "student" && role == "super-admin") ||
+        (user.role == "student" && user.enrolledBy == req.user.id)
+      ) {
         return res.status(200).json({
           success: true,
           message: "Student data fetched successfully",
           data: user,
+        });
+      } else if (user.role == "student" && user.enrolledBy != req.user.id) {
+        return res.status(404).json({
+          success: false,
+          message: "Student data not found!!",
         });
       } else if (user.role == "super-admin") {
         return res.status(400).json({
@@ -21,9 +34,14 @@ export const getUserById = async (req, res) => {
           message: "Confidential",
         });
       }
+    } else {
+      return res.status(400).json({
+        success: false,
+        message: "Not Authorised",
+      });
     }
     const data = [];
-    if (["agent", "super-admin"].includes(role)) {
+    if (["agent", "super-admin"].includes(role) && id) {
       const agentId = role == "agent" ? req.user.id : id;
       filter.enrolledBy = agentId;
       pipeline.push(
@@ -48,16 +66,12 @@ export const getUserById = async (req, res) => {
         const agent = await User.findOne({ id: agentId });
         data.push({ "Agent Profile": agent });
       }
-      if (role == "agent") {
-        const agent = await User.findOne({ id: agentId });
-        data.push({ "Your Profile": agent });
-      }
     }
     const students = await User.aggregate(pipeline);
     data.push({ "all enrolled students": students });
     return res.status(200).json({
       success: true,
-      message: "users fetched successfully",
+      message: "Data fetched successfully",
       data,
     });
   } catch (error) {
