@@ -19,16 +19,15 @@ const collegeSchema = new mongoose.Schema(
       enum: ["private", "government", "deemed", "autonomous"],
     },
     affiliation: {
-      type: String, // e.g., AICTE, UGC, etc.
+      type: String,
     },
     logo: {
-      type: String, // URL or Firebase path
+      type: String,
     },
     coverImage: {
       type: String,
     },
 
-    // 📍 Location Info
     address: {
       type: String,
     },
@@ -46,10 +45,8 @@ const collegeSchema = new mongoose.Schema(
       type: String,
     },
 
-    // 📚 Courses Offered
     courses: [],
 
-    // 💸 Fee & Scholarship Info
     avgFees: {
       type: Number,
     },
@@ -61,14 +58,12 @@ const collegeSchema = new mongoose.Schema(
       type: String,
     },
 
-    // 🏠 Facilities
     facilities: [
       {
-        type: String, // e.g., Hostel, Library, Sports Complex
+        type: String,
       },
     ],
 
-    // 🧾 Admission Process
     admissionProcess: {
       type: String,
     },
@@ -79,7 +74,6 @@ const collegeSchema = new mongoose.Schema(
       type: String,
     },
 
-    // ⭐ Reviews & Ratings
     avgRating: {
       type: Number,
       default: 0,
@@ -89,7 +83,6 @@ const collegeSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // 👥 Interaction Info
     totalStudents: {
       type: Number,
       default: 0,
@@ -103,7 +96,6 @@ const collegeSchema = new mongoose.Schema(
       default: 0,
     },
 
-    // 📞 Contact Details
     email: {
       type: String,
     },
@@ -114,7 +106,6 @@ const collegeSchema = new mongoose.Schema(
       type: String,
     },
 
-    // ✅ Status
     isApproved: {
       type: Boolean,
       default: false,
@@ -128,7 +119,6 @@ const collegeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Transform output (hide internal fields)
 collegeSchema.set("toJSON", {
   transform: (doc, ret) => {
     delete ret.__v;
