@@ -25,7 +25,7 @@ const applicationSchema = new mongoose.Schema(
       required: true,
     },
     appliedThrough: {
-      type: String, // agentId if agent applied
+      type: String,
     },
     status: {
       type: String,

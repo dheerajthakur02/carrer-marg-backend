@@ -17,23 +17,21 @@ const courseSchema = new mongoose.Schema(
       required: true,
     },
     duration: {
-      type: String, // e.g., "4 Years", "2 Years", "6 Months"
+      type: String,
     },
     eligibility: {
-      type: String, // e.g., "10+2 with PCM", "Graduate in any stream"
+      type: String,
     },
 
-    // 🧾 Admission Info
     entranceExams: [
       {
-        type: String, // e.g., "JEE Main", "NEET", "CAT"
+        type: String,
       },
     ],
     admissionProcess: {
       type: String,
     },
 
-    // 💰 Fees Info
     averageFees: {
       type: Number,
     },
@@ -50,7 +48,6 @@ const courseSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// Clean JSON output
 courseSchema.set("toJSON", {
   transform: (doc, ret) => {
     delete ret.__v;
