@@ -18,6 +18,7 @@ export const studentApply = async (req, res) => {
       examRank,
       examMarks,
       category,
+      religion,
       fathername,
       fatherOccupation,
       motherName,
@@ -76,6 +77,7 @@ export const studentApply = async (req, res) => {
         marks: examMarks,
         category: category,
       },
+      religion,
     });
 
     res.status(201).json({
@@ -108,6 +110,7 @@ export const agentApply = async (req, res) => {
       fatherOccupation,
       motherName,
       motherOccupation,
+      religion,
     } = req.body;
     if (!studentId || !collegeId || !courseId) {
       return res.json(400).json({
@@ -172,7 +175,7 @@ export const agentApply = async (req, res) => {
         marks: examMarks,
         category: category,
       },
-      category,
+      religion,
     });
     user.enrolledBy = id;
     await user.save();
@@ -239,6 +242,7 @@ export const getApplicationById = async (req, res) => {
           fatherOccupation: "$student.father.occupation",
           motherName: "$student.mother.name",
           motherOccupation: "$student.mother.occupation",
+          religion: 1,
           educationTenth: 1,
           educationtwelfth: 1,
           exam: 1,
@@ -321,16 +325,61 @@ export const getAllApplications = async (req, res) => {
     const pipeline = [
       { $match: filter },
       {
+        $lookup: {
+          from: "users",
+          localField: "studentId",
+          foreignField: "id",
+          as: "student",
+        },
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "colleges",
+          localField: "collegeId",
+          foreignField: "id",
+          as: "college",
+        },
+      },
+      { $unwind: { path: "$college", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courseId",
+          foreignField: "id",
+          as: "course",
+        },
+      },
+      { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+      {
         $project: {
           _id: 0,
           id: 1,
           applicationId: 1,
           studentId: 1,
-          collegeId: 1,
-          courseId: 1,
-          appliedBy: 1,
-          status: 1,
-          address: 1,
+          studentName: "$student.name",
+          passportSizePhoto: 1,
+          email: "$student.email",
+          mobile: "$student.mobile",
+          category: 1,
+          address: "$student.address",
+          city: "$student.city",
+          state: "$student.state",
+          address: "$student.address",
+          fatherName: "$student.father.name",
+          fatherOccupation: "$student.father.occupation",
+          motherName: "$student.mother.name",
+          motherOccupation: "$student.mother.occupation",
+          religion: 1,
+          educationTenth: 1,
+          educationtwelfth: 1,
+          exam: 1,
+          tenthMarksheet: 1,
+          tenthPassingCertificate: 1,
+          twlefthMarksheet: 1,
+          twlefthPassingCertificate: 1,
+          createdAt: 1,
+          updatedAt: 1,
           appliedThrough: 1,
         },
       },

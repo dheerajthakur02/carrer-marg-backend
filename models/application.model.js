@@ -70,6 +70,7 @@ const applicationSchema = new mongoose.Schema(
     aadharCard: {
       type: String,
     },
+    religion: String,
   },
   { timestamps: true }
 );
