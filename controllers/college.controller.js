@@ -1,29 +1,5 @@
 import College from "../models/college.model.js";
 
-export const createCollege = async (req, res) => {
-  try {
-    const data = req.body;
-    const existing = await College.findOne({
-      name: data?.name,
-      email: data?.email,
-    });
-    if (existing) {
-      return res
-        .status(400)
-        .json({ message: "College already exists", success: false });
-    }
-
-    const college = await College.create(data);
-    res.status(201).json({
-      message: "College added successfully",
-      success: true,
-      data: college,
-    });
-  } catch (error) {
-    res.status(500).json({ message: error.message, success: false });
-  }
-};
-
 export const getAllColleges = async (req, res) => {
   try {
     const { page = 1, limit = 10, search = "", type, state, city } = req.query;

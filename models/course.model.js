@@ -31,7 +31,6 @@ const courseSchema = new mongoose.Schema(
     admissionProcess: {
       type: String,
     },
-
     averageFees: {
       type: Number,
     },

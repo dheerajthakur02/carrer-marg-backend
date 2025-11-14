@@ -11,7 +11,7 @@ const router = express.Router();
 
 router.post("/student/apply", authorize(["student"]), studentApply);
 router.post("/agent/apply", authorize(["agent"]), agentApply);
-router.get("/:id", getApplicationById);
+router.get("/:id", authorize(), getApplicationById);
 router.get(
   "/",
   authorize(["agent", "student", "super-admin"]),

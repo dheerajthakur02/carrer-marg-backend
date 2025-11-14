@@ -1,6 +1,5 @@
 import express from "express";
 import {
-  createCollege,
   getAllColleges,
   getCollegeById,
   updateCollege,
@@ -10,7 +9,6 @@ import { authorize } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
 
-router.post("/", createCollege);
 router.get("/", getAllColleges);
 router.get("/:id", getCollegeById);
 router.put("/:id", updateCollege);

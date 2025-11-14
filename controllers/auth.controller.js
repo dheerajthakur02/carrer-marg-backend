@@ -2,6 +2,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import generateToken from "../utils/generateToken.js";
 import setCookie from "../utils/setCookie.js";
+import College from "../models/college.model.js";
 
 export const register = async (req, res) => {
   try {
@@ -13,28 +14,52 @@ export const register = async (req, res) => {
         success: false,
       });
     }
-    const alreadyPresentUser = await User.findOne({
-      $or: [{ email }, { mobile }],
-    });
+    let alreadyPresentUser = "";
+    if (role !== "college") {
+      alreadyPresentUser = await User.findOne({
+        $or: [{ email }, { mobile }],
+      });
+    } else {
+      alreadyPresentUser = await College.findOne({
+        $or: [{ email }, { mobile }],
+      });
+    }
     if (alreadyPresentUser) {
       return res.status(400).json({
         message: "User with this email or mobile already exists!",
         success: false,
       });
     }
-    const user = new User({
-      name,
-      role,
-      email,
-      mobile,
-      password,
-      ...profileData,
-    });
-    await user.save();
+
+    let registeredData;
+    if (role !== "college") {
+      registeredData = new User({
+        name,
+        role,
+        email,
+        mobile,
+        password,
+        enrolledBy:
+          role == "student" && req.user.role == "agent" ? req.user.id : "",
+        ...profileData,
+      });
+      await registeredData.save();
+    } else {
+      registeredData = new College({
+        name,
+        role,
+        email,
+        mobile,
+        password,
+        ...profileData,
+      });
+      await registeredData.save();
+    }
+
     return res.status(201).json({
       message: "User registered successfully",
       success: true,
-      data: user,
+      data: registeredData,
     });
   } catch (error) {
     return res.status(500).json({
@@ -55,26 +80,29 @@ export const loginWithPassword = async (req, res) => {
         success: false,
       });
     }
-
-    const user = await User.findOne({
+    let user;
+    user = await User.findOne({
       $or: [{ email }, { mobile }],
     });
-
+    if (!user) {
+      user = await College.findOne({
+        $or: [{ email }, { mobile }],
+      });
+    }
     if (!user) {
       return res.status(404).json({
         message: "User not found",
         success: false,
       });
     }
-
     const comparePassword = await bcrypt.compare(password, user.password);
     if (!comparePassword) {
       return res
         .status(400)
         .json({ message: "Incorrect email or password", success: false });
     }
-
-    const token = generateToken(user.id, user.role);
+    const role = user?.role || "college";
+    const token = generateToken(user.id, role);
     setCookie(res, token);
 
     return res.status(200).json({
@@ -100,7 +128,9 @@ export const logout = (req, res) => {
     });
 
     return res.status(200).json({
-      message: `${req?.user?.role || "User"} has been logged out successfully`,
+      message: `${
+        req?.user?.role || "College"
+      } has been logged out successfully`,
       success: true,
     });
   } catch (error) {

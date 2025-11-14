@@ -1,20 +1,21 @@
 import mongoose from "mongoose";
 import { v4 as uuidv4 } from "uuid";
-
+import generateApplicationNumber from "../utils/generateApplicationNumber.js";
 const applicationSchema = new mongoose.Schema(
   {
     id: {
       type: String,
       default: () => `application-${uuidv4()}`,
     },
+    applicationId: {
+      type: String,
+      default: generateApplicationNumber(),
+    },
     studentId: {
       type: String,
       required: true,
     },
-    collegeId: {
-      type: String,
-      required: true,
-    },
+    collegeId: [],
     courseId: {
       type: String,
       required: true,
@@ -32,7 +33,43 @@ const applicationSchema = new mongoose.Schema(
       enum: ["applied", "reviewing", "accepted", "rejected"],
       default: "applied",
     },
+
     remarks: String,
+    educationTenth: {
+      boardName: String,
+      obtainedMarks: String,
+      fullMarks: String,
+    },
+
+    educationtwelfth: {
+      boardName: String,
+      obtainedMarks: String,
+      fullMarks: String,
+    },
+    exam: {
+      name: String,
+      rank: String,
+      marks: String,
+      category: String,
+    },
+    tenthMarksheet: {
+      type: String,
+    },
+    tenthPassingCertificate: {
+      type: String,
+    },
+    twlefthMarksheet: {
+      type: String,
+    },
+    twlefthPassingCertificate: {
+      type: String,
+    },
+    passportSizePhoto: {
+      type: String,
+    },
+    aadharCard: {
+      type: String,
+    },
   },
   { timestamps: true }
 );

@@ -2,9 +2,27 @@ import Application from "../models/application.model.js";
 import College from "../models/college.model.js ";
 import Course from "../models/course.model.js";
 import User from "../models/user.model.js";
+
 export const studentApply = async (req, res) => {
   try {
-    const { collegeId, courseId } = req.body;
+    const {
+      collegeId,
+      courseId,
+      tenthBoardName,
+      tenthObtainedMarks,
+      tenthFullMarks,
+      twelfthBoardName,
+      twelfthObtainedMarks,
+      twelfthFullMarks,
+      examName,
+      examRank,
+      examMarks,
+      category,
+      fathername,
+      fatherOccupation,
+      motherName,
+      motherOccupation,
+    } = req.body;
     const id = req.user.id;
 
     const college = await College.findOne({ id: collegeId });
@@ -13,29 +31,51 @@ export const studentApply = async (req, res) => {
         .status(404)
         .json({ message: "college not found", success: false });
     }
-    const course = await Course.findOne({ id: courseId });
 
+    const course = await Course.findOne({ id: courseId });
     if (!course) {
       return res
         .status(404)
         .json({ message: "course not found", success: false });
     }
-
+    const data = await User.findOne({ id: studentId });
     const exists = await Application.findOne({
       studentId: id,
       collegeId,
       courseId,
     });
-    if (exists)
+    if (exists) {
       return res
         .status(400)
         .json({ message: "Already applied for this course", success: false });
+    }
 
+    data.father.name = fathername;
+    data.father.occupation = fatherOccupation;
+    data.mother.name = motherName;
+    data.mother.occupation = motherOccupation;
+    await data.save();
     const app = await Application.create({
       studentId: id,
       collegeId,
       courseId,
-      appliedBy: "student",
+      appliedBy: req.user.role,
+      educationTenth: {
+        boardName: tenthBoardName,
+        obtainedMarks: tenthObtainedMarks,
+        fullMarks: tenthFullMarks,
+      },
+      educationtwelfth: {
+        boardName: twelfthBoardName,
+        obtainedMarks: twelfthObtainedMarks,
+        fullMarks: twelfthFullMarks,
+      },
+      exam: {
+        name: examName,
+        rank: examRank,
+        marks: examMarks,
+        category: category,
+      },
     });
 
     res.status(201).json({
@@ -50,7 +90,25 @@ export const studentApply = async (req, res) => {
 
 export const agentApply = async (req, res) => {
   try {
-    const { studentId, collegeId, courseId } = req.body;
+    const {
+      studentId,
+      collegeId,
+      courseId,
+      tenthBoardName,
+      tenthObtainedMarks,
+      tenthFullMarks,
+      twelfthBoardName,
+      twelfthObtainedMarks,
+      twelfthFullMarks,
+      examName,
+      examRank,
+      examMarks,
+      category,
+      fathername,
+      fatherOccupation,
+      motherName,
+      motherOccupation,
+    } = req.body;
     if (!studentId || !collegeId || !courseId) {
       return res.json(400).json({
         message: "some feilds are missing.",
@@ -76,6 +134,7 @@ export const agentApply = async (req, res) => {
         .status(404)
         .json({ message: "Course not found", success: false });
     }
+
     const exists = await Application.findOne({
       studentId,
       collegeId,
@@ -86,12 +145,34 @@ export const agentApply = async (req, res) => {
         .status(400)
         .json({ message: "Already applied for this course", success: false });
 
+    user.father.name = fathername;
+    user.father.occupation = fatherOccupation;
+    user.mother.name = motherName;
+    user.mother.occupation = motherOccupation;
+    await user.save();
     const app = await Application.create({
       studentId,
       collegeId,
       courseId,
       appliedBy: "agent",
       appliedThrough: id,
+      educationTenth: {
+        boardName: tenthBoardName,
+        obtainedMarks: tenthObtainedMarks,
+        fullMarks: tenthFullMarks,
+      },
+      educationtwelfth: {
+        boardName: twelfthBoardName,
+        obtainedMarks: twelfthObtainedMarks,
+        fullMarks: twelfthFullMarks,
+      },
+      exam: {
+        name: examName,
+        rank: examRank,
+        marks: examMarks,
+        category: category,
+      },
+      category,
     });
     user.enrolledBy = id;
     await user.save();
@@ -107,22 +188,94 @@ export const agentApply = async (req, res) => {
 
 export const getApplicationById = async (req, res) => {
   try {
-    const { id } = req.params;
-
-    const application = await Application.findOne({ id });
+    const applicationId = req.params.id;
+    const id = req.user.id;
+    const role = req.user.role;
+    const pipeline = [
+      { $match: { id: applicationId } },
+      {
+        $lookup: {
+          from: "users",
+          localField: "studentId",
+          foreignField: "id",
+          as: "student",
+        },
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "colleges",
+          localField: "collegeId",
+          foreignField: "id",
+          as: "college",
+        },
+      },
+      { $unwind: { path: "$college", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: "courses",
+          localField: "courseId",
+          foreignField: "id",
+          as: "course",
+        },
+      },
+      { $unwind: { path: "$course", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 0,
+          id: 1,
+          applicationId: 1,
+          studentId: 1,
+          studentName: "$student.name",
+          passportSizePhoto: 1,
+          email: "$student.email",
+          mobile: "$student.mobile",
+          category: 1,
+          address: "$student.address",
+          city: "$student.city",
+          state: "$student.state",
+          address: "$student.address",
+          fatherName: "$student.father.name",
+          fatherOccupation: "$student.father.occupation",
+          motherName: "$student.mother.name",
+          motherOccupation: "$student.mother.occupation",
+          educationTenth: 1,
+          educationtwelfth: 1,
+          exam: 1,
+          tenthMarksheet: 1,
+          tenthPassingCertificate: 1,
+          twlefthMarksheet: 1,
+          twlefthPassingCertificate: 1,
+          createdAt: 1,
+          updatedAt: 1,
+          appliedThrough: 1,
+        },
+      },
+    ];
+    const application = await Application.aggregate(pipeline);
 
     if (!application) {
       return res.status(404).json({
+        message: "application not found",
         success: false,
-        message: "Application not found",
       });
     }
-
-    res.status(200).json({
-      success: true,
-      message: "Application fetched successfully",
-      data: application,
-    });
+    if (
+      (role == "student" && application[0].studentId == id) ||
+      (role == "agent" && application[0].appliedThrough == id) ||
+      role == "super-admin"
+    ) {
+      res.status(200).json({
+        success: true,
+        message: "Application fetched successfully",
+        data: application[0],
+      });
+    } else {
+      return res.status(404).json({
+        message: "application not found",
+        success: false,
+      });
+    }
   } catch (error) {
     console.error("Error fetching application:", error);
     res.status(500).json({
@@ -171,6 +324,7 @@ export const getAllApplications = async (req, res) => {
         $project: {
           _id: 0,
           id: 1,
+          applicationId: 1,
           studentId: 1,
           collegeId: 1,
           courseId: 1,

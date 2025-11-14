@@ -62,13 +62,18 @@ const userSchema = new mongoose.Schema(
     twelfthPercentage: {
       type: Number,
     },
-    graduationPercentage: {
-      type: Number,
-    },
     status: {
       type: String,
       enum: ["active", "inactive"],
       default: "active",
+    },
+    father: {
+      name: String,
+      occupation: String,
+    },
+    mother: {
+      name: String,
+      occupation: String,
     },
   },
   {
