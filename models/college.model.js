@@ -108,12 +108,6 @@ const collegeSchema = new mongoose.Schema(
       default: 0,
     },
 
-    email: {
-      type: String,
-    },
-    phone: {
-      type: String,
-    },
     website: {
       type: String,
     },
