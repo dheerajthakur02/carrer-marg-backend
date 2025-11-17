@@ -51,6 +51,13 @@ export const studentApply = async (req, res) => {
         .json({ message: "Already applied for this course", success: false });
     }
 
+    const tenthMarksheet = req?.tenthMarksheet[0] || "";
+    const tenthPassingCertificate = req?.tenthPassingCertificate[0] || "";
+    const twlefthMarksheet = req?.twlefthMarksheet[0] || "";
+    const twlefthPassingCertificate = req?.twlefthPassingCertificate[0] || "";
+    const passportSizePhoto = req?.passportSizePhoto[0] || "";
+    const aadharCard = req?.aadharCard[0] || "";
+
     data.father.name = fathername;
     data.father.occupation = fatherOccupation;
     data.mother.name = motherName;
@@ -78,6 +85,12 @@ export const studentApply = async (req, res) => {
         category: category,
       },
       religion,
+      tenthMarksheet,
+      tenthPassingCertificate,
+      twlefthMarksheet,
+      twlefthPassingCertificate,
+      passportSizePhoto,
+      aadharCard,
     });
 
     res.status(201).json({
@@ -148,11 +161,19 @@ export const agentApply = async (req, res) => {
         .status(400)
         .json({ message: "Already applied for this course", success: false });
 
+    const tenthMarksheet = req?.tenthMarksheet[0] || "";
+    const tenthPassingCertificate = req?.tenthPassingCertificate[0] || "";
+    const twlefthMarksheet = req?.twlefthMarksheet[0] || "";
+    const twlefthPassingCertificate = req?.twlefthPassingCertificate[0] || "";
+    const passportSizePhoto = req?.passportSizePhoto[0] || "";
+    const aadharCard = req?.aadharCard[0] || "";
+
     user.father.name = fathername;
     user.father.occupation = fatherOccupation;
     user.mother.name = motherName;
     user.mother.occupation = motherOccupation;
     await user.save();
+
     const app = await Application.create({
       studentId,
       collegeId,
@@ -176,6 +197,13 @@ export const agentApply = async (req, res) => {
         category: category,
       },
       religion,
+      religion,
+      tenthMarksheet,
+      tenthPassingCertificate,
+      twlefthMarksheet,
+      twlefthPassingCertificate,
+      passportSizePhoto,
+      aadharCard,
     });
     user.enrolledBy = id;
     await user.save();
